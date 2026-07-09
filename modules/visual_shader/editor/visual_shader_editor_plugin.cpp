@@ -39,7 +39,7 @@
 #include "core/object/class_db.h"
 #include "core/os/keyboard.h"
 #include "core/os/os.h"
-#include "core/version_generated.gen.h"
+#include "core/version.h"
 #include "editor/docks/filesystem_dock.h"
 #include "editor/docks/inspector_dock.h"
 #include "editor/editor_node.h"
@@ -6770,7 +6770,7 @@ VisualShaderEditor::VisualShaderEditor() {
 	site_search->set_theme_type_variation(SceneStringName(FlatButton));
 	site_search->connect(SceneStringName(pressed), callable_mp(this, &VisualShaderEditor::_help_open));
 	site_search->set_text(TTR("Online Docs"));
-	site_search->set_tooltip_text(TTR("Open Godot online documentation."));
+	site_search->set_tooltip_text(vformat(TTR("Open %s online documentation."), GODOT_VERSION_NAME));
 	toolbar_hflow->add_child(site_search);
 
 	VSeparator *separator = memnew(VSeparator);
@@ -7165,7 +7165,7 @@ VisualShaderEditor::VisualShaderEditor() {
 
 	// INPUT
 
-	const String translation_gdsl = "\n\n" + TTR("Translated to '%s' in Godot Shading Language.");
+	const String translation_gdsl = "\n\n" + vformat(TTR("Translated to '%s' in %s Shading Language."), "%s", GODOT_VERSION_NAME);
 	const String input_param_shader_modes = TTR("'%s' input parameter for all shader modes.") + translation_gdsl;
 
 	// NODE3D-FOR-ALL
@@ -7792,8 +7792,8 @@ VisualShaderEditor::VisualShaderEditor() {
 
 	// SPECIAL
 	add_options.push_back(AddOption("Frame", "Special", "VisualShaderNodeFrame", TTR("A rectangular area with a description string for better graph organization.")));
-	add_options.push_back(AddOption("Expression", "Special", "VisualShaderNodeExpression", TTR("Custom Godot Shader Language expression, with custom amount of input and output ports. This is a direct injection of code into the vertex/fragment/light function, do not use it to write the function declarations inside.")));
-	add_options.push_back(AddOption("GlobalExpression", "Special", "VisualShaderNodeGlobalExpression", TTR("Custom Godot Shader Language expression, which is placed on top of the resulted shader. You can place various function definitions inside and call it later in the Expressions. You can also declare varyings, parameters and constants.")));
+	add_options.push_back(AddOption("Expression", "Special", "VisualShaderNodeExpression", vformat(TTR("Custom %s Shader Language expression, with custom amount of input and output ports. This is a direct injection of code into the vertex/fragment/light function, do not use it to write the function declarations inside."), GODOT_VERSION_NAME)));
+	add_options.push_back(AddOption("GlobalExpression", "Special", "VisualShaderNodeGlobalExpression", vformat(TTR("Custom %s Shader Language expression, which is placed on top of the resulted shader. You can place various function definitions inside and call it later in the Expressions. You can also declare varyings, parameters and constants."), GODOT_VERSION_NAME)));
 	add_options.push_back(AddOption("ParameterRef", "Special", "VisualShaderNodeParameterRef", TTR("A reference to an existing parameter.")));
 	add_options.push_back(AddOption("VaryingGetter", "Special", "VisualShaderNodeVaryingGetter", TTR("Get varying parameter."), {}, -1, TYPE_FLAGS_FRAGMENT | TYPE_FLAGS_LIGHT, Shader::MODE_SPATIAL));
 	add_options.push_back(AddOption("VaryingSetter", "Special", "VisualShaderNodeVaryingSetter", TTR("Set varying parameter."), {}, -1, TYPE_FLAGS_VERTEX | TYPE_FLAGS_FRAGMENT, Shader::MODE_SPATIAL));

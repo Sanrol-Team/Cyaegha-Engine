@@ -111,7 +111,7 @@ void ProjectDialog::_validate_path() {
 	InputType target_path_input_type = PROJECT_PATH;
 
 	if (mode == MODE_IMPORT) {
-		if (path.get_file().strip_edges() == "project.godot") {
+		if (ProjectSettings::is_project_config_file_name(path.get_file().strip_edges())) {
 			path = path.get_base_dir();
 			project_path->set_text(path);
 		}
@@ -156,7 +156,7 @@ void ProjectDialog::_validate_path() {
 					continue;
 				}
 
-				if (name.get_file() == "project.godot") {
+				if (ProjectSettings::is_project_config_file_name(name.get_file())) {
 					break; // ret == UNZ_OK.
 				}
 
@@ -164,13 +164,13 @@ void ProjectDialog::_validate_path() {
 			}
 
 			if (ret == UNZ_END_OF_LIST_OF_FILE) {
-				_set_message(TTRC("Invalid \".zip\" project file; it doesn't contain a \"project.godot\" file."), MESSAGE_ERROR);
+				_set_message(vformat(TTRC("Invalid \".zip\" project file; it doesn't contain a \"%s\" file."), ProjectSettings::PROJECT_CONFIG_FILE_NAME), MESSAGE_ERROR);
 				unzClose(pkg);
 				return;
 			}
 
 			unzClose(pkg);
-		} else if (d->dir_exists(path) && d->file_exists(path.path_join("project.godot"))) {
+		} else if (d->dir_exists(path) && !ProjectSettings::resolve_project_config_path(path).is_empty()) {
 			zip_path = "";
 
 			create_dir->hide();
@@ -181,7 +181,7 @@ void ProjectDialog::_validate_path() {
 			create_dir->hide();
 			install_path_container->hide();
 
-			_set_message(TTRC("Please choose a \"project.godot\", a directory with one, or a \".zip\" file."), MESSAGE_ERROR);
+			_set_message(vformat(TTRC("Please choose a \"%s\", a directory with one, or a \".zip\" file."), ProjectSettings::PROJECT_CONFIG_FILE_NAME), MESSAGE_ERROR);
 			return;
 		}
 	}
@@ -422,7 +422,8 @@ void ProjectDialog::_browse_project_path() {
 	if (mode == MODE_IMPORT) {
 		fdialog_project->set_file_mode(EditorFileDialog::FILE_MODE_OPEN_ANY);
 		fdialog_project->clear_filters();
-		fdialog_project->add_filter("project.godot", vformat("%s %s", GODOT_VERSION_NAME, TTR("Project")));
+		fdialog_project->add_filter(ProjectSettings::PROJECT_CONFIG_FILE_NAME, vformat("%s %s", GODOT_VERSION_NAME, TTR("Project")));
+		fdialog_project->add_filter(ProjectSettings::LEGACY_PROJECT_CONFIG_FILE_NAME, vformat("%s %s (%s)", GODOT_VERSION_NAME, TTR("Project"), TTR("Legacy")));
 		fdialog_project->add_filter("*.zip", TTR("ZIP File"));
 	} else {
 		fdialog_project->set_file_mode(EditorFileDialog::FILE_MODE_OPEN_DIR);
@@ -549,7 +550,7 @@ void ProjectDialog::ok_pressed() {
 			nonempty_confirmation = memnew(ConfirmationDialog);
 			nonempty_confirmation->set_flag(Window::FLAG_RESIZE_DISABLED, true);
 			nonempty_confirmation->set_title(TTRC("Warning: This folder is not empty"));
-			nonempty_confirmation->set_text(TTRC("You are about to create a Godot project in a non-empty folder.\nThe entire contents of this folder will be imported as project resources!\n\nAre you sure you wish to continue?"));
+			nonempty_confirmation->set_text(vformat(TTRC("You are about to create a %s project in a non-empty folder.\nThe entire contents of this folder will be imported as project resources!\n\nAre you sure you wish to continue?"), GODOT_VERSION_NAME));
 			nonempty_confirmation->get_ok_button()->connect(SceneStringName(pressed), callable_mp(this, &ProjectDialog::_nonempty_confirmation_ok_pressed));
 			add_child(nonempty_confirmation);
 		}
@@ -602,9 +603,9 @@ void ProjectDialog::ok_pressed() {
 			initial_settings[extra_setting.key] = extra_setting.value;
 		}
 
-		Error err = ProjectSettings::get_singleton()->save_custom(path.path_join("project.godot"), initial_settings, Vector<String>(), false);
+		Error err = ProjectSettings::get_singleton()->save_custom(ProjectSettings::path_join_project_config(path), initial_settings, Vector<String>(), false);
 		if (err != OK) {
-			_set_message(TTRC("Couldn't create project.godot in project path."), MESSAGE_ERROR);
+			_set_message(vformat(TTRC("Couldn't create %s in project path."), ProjectSettings::PROJECT_CONFIG_FILE_NAME), MESSAGE_ERROR);
 			return;
 		}
 
@@ -674,7 +675,7 @@ void ProjectDialog::ok_pressed() {
 					continue;
 				}
 
-				if (name.get_file() == "project.godot") {
+				if (ProjectSettings::is_project_config_file_name(name.get_file())) {
 					zip_root = name.get_base_dir();
 					break;
 				}
@@ -683,7 +684,7 @@ void ProjectDialog::ok_pressed() {
 			}
 
 			if (ret == UNZ_END_OF_LIST_OF_FILE) {
-				_set_message(TTRC("Invalid \".zip\" project file; it doesn't contain a \"project.godot\" file."), MESSAGE_ERROR);
+				_set_message(vformat(TTRC("Invalid \".zip\" project file; it doesn't contain a \"%s\" file."), ProjectSettings::PROJECT_CONFIG_FILE_NAME), MESSAGE_ERROR);
 				unzClose(pkg);
 				return;
 			}
@@ -776,17 +777,20 @@ void ProjectDialog::ok_pressed() {
 	if (mode == MODE_RENAME || mode == MODE_INSTALL || mode == MODE_DUPLICATE) {
 		// Load project.godot as ConfigFile to set the new name.
 		ConfigFile cfg;
-		String project_godot = path.path_join("project.godot");
-		Error err = cfg.load(project_godot);
+		String project_config = ProjectSettings::resolve_project_config_path(path);
+		if (project_config.is_empty()) {
+			project_config = ProjectSettings::path_join_project_config(path);
+		}
+		Error err = cfg.load(project_config);
 		if (err != OK) {
-			dialog_error->set_text(vformat(TTR("Couldn't load project at '%s' (error %d). It may be missing or corrupted."), project_godot, err));
+			dialog_error->set_text(vformat(TTR("Couldn't load project at '%s' (error %d). It may be missing or corrupted."), project_config, err));
 			dialog_error->popup_centered();
 			return;
 		}
 		cfg.set_value("application", "config/name", project_name->get_text().strip_edges());
-		err = cfg.save(project_godot);
+		err = cfg.save(project_config);
 		if (err != OK) {
-			dialog_error->set_text(vformat(TTR("Couldn't save project at '%s' (error %d)."), project_godot, err));
+			dialog_error->set_text(vformat(TTR("Couldn't save project at '%s' (error %d)."), project_config, err));
 			dialog_error->popup_centered();
 			return;
 		}

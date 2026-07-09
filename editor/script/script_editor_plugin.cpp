@@ -1947,12 +1947,12 @@ void ScriptEditor::_update_online_doc() {
 	}
 	if (native_class_doc) {
 		String name = eh->get_class();
-		String tooltip = vformat(TTR("Open '%s' in Godot online documentation."), name);
+		String tooltip = vformat(TTR("Open '%s' in %s online documentation."), name, GODOT_VERSION_NAME);
 		site_search->set_text(TTRC("Open in Online Docs"));
 		site_search->set_tooltip_text(tooltip);
 	} else {
 		site_search->set_text(TTRC("Online Docs"));
-		site_search->set_tooltip_text(TTRC("Open Godot online documentation."));
+		site_search->set_tooltip_text(vformat(TTRC("Open %s online documentation."), GODOT_VERSION_NAME));
 	}
 }
 
@@ -4188,7 +4188,7 @@ ScriptEditor::ScriptEditor(WindowWrapper *p_wrapper) {
 
 	disk_changed = memnew(ConfirmationDialog);
 	{
-		disk_changed->set_title(TTRC("Files have been modified outside Godot"));
+		disk_changed->set_title(vformat(TTRC("Files have been modified outside %s"), GODOT_VERSION_NAME));
 
 		VBoxContainer *vbc = memnew(VBoxContainer);
 		disk_changed->add_child(vbc);
@@ -4288,7 +4288,7 @@ void ScriptEditorPlugin::_window_visibility_changed(bool p_visible) {
 void ScriptEditorPlugin::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_TRANSLATION_CHANGED: {
-			window_wrapper->set_window_title(vformat(TTR("%s - Godot Engine"), TTR("Script Editor")));
+			window_wrapper->set_window_title(vformat("%s - %s", TTR("Script Editor"), GODOT_VERSION_NAME));
 		} break;
 		case NOTIFICATION_ENTER_TREE: {
 			connect("main_screen_changed", callable_mp(this, &ScriptEditorPlugin::_save_last_editor));

@@ -1,0 +1,38 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 20,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "native-windows-editor",
+      "displayName": "Native CMake — Windows Editor (MSVC)",
+      "description": "Native CMake build without SCons. Requires Visual Studio Build Tools.",
+      "generator": "Visual Studio 18 2026",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build-native",
+      "cacheVariables": {
+        "GODOT_PLATFORM": "windows",
+        "GODOT_TARGET": "editor",
+        "GODOT_ARCH": "x86_64"
+      }
+    },
+    {
+      "name": "native-windows-editor-dev",
+      "displayName": "Native CMake — Windows Editor Dev",
+      "inherits": "native-windows-editor",
+      "cacheVariables": {
+        "GODOT_DEV_BUILD": "ON"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "native-windows-editor",
+      "configurePreset": "native-windows-editor",
+      "configuration": "Debug"
+    }
+  ]
+}

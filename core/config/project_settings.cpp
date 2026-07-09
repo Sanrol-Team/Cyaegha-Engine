@@ -58,6 +58,33 @@ ProjectSettings *ProjectSettings::get_singleton() {
 	return singleton;
 }
 
+bool ProjectSettings::is_project_config_file_name(const String &p_filename) {
+	return p_filename == PROJECT_CONFIG_FILE_NAME || p_filename == LEGACY_PROJECT_CONFIG_FILE_NAME;
+}
+
+String ProjectSettings::path_join_project_config(const String &p_dir) {
+	return p_dir.path_join(PROJECT_CONFIG_FILE_NAME);
+}
+
+String ProjectSettings::resolve_project_config_path(const String &p_dir) {
+	const String config_path = p_dir.path_join(PROJECT_CONFIG_FILE_NAME);
+	if (FileAccess::exists(config_path)) {
+		return config_path;
+	}
+	const String legacy_path = p_dir.path_join(LEGACY_PROJECT_CONFIG_FILE_NAME);
+	if (FileAccess::exists(legacy_path)) {
+		return legacy_path;
+	}
+	return String();
+}
+
+String ProjectSettings::get_project_config_path() const {
+	if (!resource_path.is_empty()) {
+		return resource_path.path_join(loaded_project_config_file);
+	}
+	return PROJECT_CONFIG_FILE_NAME;
+}
+
 String ProjectSettings::get_project_data_dir_name() const {
 	return project_data_dir_name;
 }
@@ -690,7 +717,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 		bool ok = _load_resource_pack(p_main_pack, false, 0, true);
 		ERR_FAIL_COND_V_MSG(!ok, ERR_CANT_OPEN, vformat("Cannot open resource pack '%s'.", p_main_pack));
 
-		Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
+		Error err = _load_settings_text_or_binary_with_fallback("res://");
 #ifdef OVERRIDE_ENABLED
 		if (err == OK && !p_ignore_override) {
 			// Load override from location of the main pack
@@ -745,7 +772,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 
 		// If we opened our package, try and load our project.
 		if (found) {
-			Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
+			Error err = _load_settings_text_or_binary_with_fallback("res://");
 #ifdef OVERRIDE_ENABLED
 			if (err == OK && !p_ignore_override) {
 				// Load overrides from the PCK and the executable location.
@@ -770,7 +797,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 	// (Only Android -when reading from PCK-.)
 
 	if (!OS::get_singleton()->get_resource_dir().is_empty()) {
-		Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
+		Error err = _load_settings_text_or_binary_with_fallback("res://");
 #ifdef OVERRIDE_ENABLED
 		if (err == OK && !p_ignore_override) {
 			// Optional, we don't mind if it fails.
@@ -796,7 +823,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 
 		Error err;
 
-		err = _load_settings_text_or_binary(resource_path.path_join("project.godot"), resource_path.path_join("project.binary"));
+		err = _load_settings_text_or_binary_with_fallback(resource_path);
 		if (err == OK && !p_ignore_override) {
 			// Optional, we don't mind if it fails.
 #ifdef OVERRIDE_ENABLED
@@ -825,7 +852,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 		// Set the resource path early so things can be resolved when loading.
 		resource_path = current_dir;
 		resource_path = resource_path.replace_char('\\', '/'); // Windows path to Unix path just in case.
-		err = _load_settings_text_or_binary(current_dir.path_join("project.godot"), current_dir.path_join("project.binary"));
+		err = _load_settings_text_or_binary_with_fallback(current_dir);
 		if (err == OK) {
 #ifdef OVERRIDE_ENABLED
 			if (!p_ignore_override) {
@@ -884,6 +911,18 @@ Error ProjectSettings::setup(const String &p_path, const String &p_main_pack, bo
 	// Updating the default value after the project settings have loaded.
 	bool use_hidden_directory = GLOBAL_GET("application/config/use_hidden_project_data_directory");
 	project_data_dir_name = (use_hidden_directory ? "." : "") + PROJECT_DATA_DIR_NAME_SUFFIX;
+
+	if (project_loaded && !resource_path.is_empty()) {
+		const String legacy_data_dir = (use_hidden_directory ? "." : "") + LEGACY_PROJECT_DATA_DIR_NAME_SUFFIX;
+		Ref<DirAccess> da = DirAccess::open(resource_path);
+		if (da.is_valid()) {
+			const bool has_legacy = da->dir_exists(legacy_data_dir);
+			const bool has_current = da->dir_exists(project_data_dir_name);
+			if (has_legacy && !has_current) {
+				project_data_dir_name = legacy_data_dir;
+			}
+		}
+	}
 
 	// Using GLOBAL_GET on every block for compressing can be slow, so assigning here.
 	Compression::zstd_long_distance_matching = GLOBAL_GET("compression/formats/zstd/long_distance_matching");
@@ -972,7 +1011,7 @@ Error ProjectSettings::_load_settings_text(const String &p_path) {
 			// If we're loading a project.godot from source code, we can operate some
 			// ProjectSettings conversions if need be.
 			_convert_to_last_version(config_version);
-			last_save_time = FileAccess::get_modified_time(get_resource_path().path_join("project.godot"));
+			last_save_time = FileAccess::get_modified_time(get_project_config_path());
 			return OK;
 		}
 		ERR_FAIL_COND_V_MSG(err != OK, err, vformat("Error parsing '%s' at line %d: %s File might be corrupted.", p_path, lines, error_text));
@@ -992,6 +1031,27 @@ Error ProjectSettings::_load_settings_text(const String &p_path) {
 			section = next_tag.name;
 		}
 	}
+}
+
+Error ProjectSettings::_load_settings_text_or_binary_with_fallback(const String &p_dir_or_prefix) {
+	String prefix = p_dir_or_prefix;
+	if (!prefix.is_empty() && !prefix.ends_with("/")) {
+		prefix += "/";
+	}
+
+	const String config_path = prefix + PROJECT_CONFIG_FILE_NAME;
+	if (FileAccess::exists(config_path)) {
+		loaded_project_config_file = PROJECT_CONFIG_FILE_NAME;
+		return _load_settings_text_or_binary(config_path, prefix + "project.binary");
+	}
+
+	const String legacy_path = prefix + LEGACY_PROJECT_CONFIG_FILE_NAME;
+	if (FileAccess::exists(legacy_path)) {
+		loaded_project_config_file = LEGACY_PROJECT_CONFIG_FILE_NAME;
+		return _load_settings_text_or_binary(legacy_path, prefix + "project.binary");
+	}
+
+	return ERR_FILE_NOT_FOUND;
 }
 
 Error ProjectSettings::_load_settings_text_or_binary(const String &p_text_path, const String &p_bin_path) {
@@ -1031,6 +1091,10 @@ Error ProjectSettings::_load_settings_text_or_binary(const String &p_text_path, 
 }
 
 Error ProjectSettings::load_custom(const String &p_path) {
+	loaded_project_config_file = p_path.get_file();
+	if (loaded_project_config_file.is_empty()) {
+		loaded_project_config_file = PROJECT_CONFIG_FILE_NAME;
+	}
 	if (p_path.ends_with(".binary")) {
 		return _load_settings_binary(p_path);
 	}
@@ -1067,9 +1131,11 @@ void ProjectSettings::clear(const String &p_name) {
 }
 
 Error ProjectSettings::save() {
-	Error error = save_custom(get_resource_path().path_join("project.godot"));
+	const String path = get_resource_path().path_join(PROJECT_CONFIG_FILE_NAME);
+	loaded_project_config_file = PROJECT_CONFIG_FILE_NAME;
+	Error error = save_custom(path);
 	if (error == OK) {
-		last_save_time = FileAccess::get_modified_time(get_resource_path().path_join("project.godot"));
+		last_save_time = FileAccess::get_modified_time(path);
 	}
 	return error;
 }
@@ -1315,7 +1381,7 @@ Error ProjectSettings::save_custom(const String &p_path, const CustomMap &p_cust
 		save_features += f;
 	}
 
-	if (p_path.ends_with(".godot") || p_path.ends_with("override.cfg")) {
+	if (p_path.ends_with(".cyaegha") || p_path.ends_with(".godot") || p_path.ends_with("override.cfg")) {
 		return _save_settings_text(p_path, save_props, p_custom, save_features);
 	} else if (p_path.ends_with(".binary")) {
 		return _save_settings_binary(p_path, save_props, p_custom, save_features);

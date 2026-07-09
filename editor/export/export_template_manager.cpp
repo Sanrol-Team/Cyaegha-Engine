@@ -646,7 +646,7 @@ void ExportTemplateManager::_fill_template_tree(Tree *p_tree, const HashMap<Temp
 
 	if (is_available_tree && !p_is_current_version) {
 		TreeItem *nodownloadsforyou = platform_parent->create_child();
-		nodownloadsforyou->set_text(0, TTR("Downloads are only available for the current Godot version."));
+		nodownloadsforyou->set_text(0, vformat(TTR("Downloads are only available for the current %s version."), GODOT_VERSION_NAME));
 		nodownloadsforyou->set_custom_color(0, get_theme_color(SNAME("font_disabled_color"), EditorStringName(Editor)));
 		return;
 	}
@@ -836,7 +836,7 @@ void ExportTemplateManager::_update_install_button() {
 		} else if (mirrors_empty) {
 			install_button->set_tooltip_text(TTRC("No mirrors available for download."));
 		} else {
-			install_button->set_tooltip_text(TTRC("Downloads are only available for the current Godot version."));
+			install_button->set_tooltip_text(vformat(TTRC("Downloads are only available for the current %s version."), GODOT_VERSION_NAME));
 		}
 	} else {
 		install_button->set_tooltip_text(String());
@@ -1591,7 +1591,7 @@ ExportTemplateManager::ExportTemplateManager() {
 	tpz_selection_dialog->set_access(FileDialog::ACCESS_FILESYSTEM);
 	tpz_selection_dialog->set_file_mode(FileDialog::FILE_MODE_OPEN_FILE);
 	tpz_selection_dialog->set_current_dir(EDITOR_DEF("_export_template_download_directory", ""));
-	tpz_selection_dialog->add_filter("*.tpz", TTRC("Godot Export Templates"));
+	tpz_selection_dialog->add_filter("*.tpz", vformat(TTRC("%s Export Templates"), GODOT_VERSION_NAME));
 	tpz_selection_dialog->connect("file_selected", callable_mp(this, &ExportTemplateManager::_tpz_file_selected));
 	add_child(tpz_selection_dialog);
 
@@ -1604,12 +1604,12 @@ ExportTemplateManager::ExportTemplateManager() {
 	VBoxContainer *side_vb = memnew(VBoxContainer);
 	main_split->add_child(side_vb);
 
-	Label *version_header = memnew(Label(TTRC("Godot Version")));
+	Label *version_header = memnew(Label(vformat(TTRC("%s Version"), GODOT_VERSION_NAME)));
 	version_header->set_theme_type_variation("HeaderSmall");
 	side_vb->add_child(version_header);
 
 	version_list = memnew(ItemList);
-	version_list->set_accessibility_name(TTRC("Godot Version List"));
+	version_list->set_accessibility_name(vformat(TTRC("%s Version List"), GODOT_VERSION_NAME));
 	version_list->set_theme_type_variation("ItemListSecondary");
 	version_list->set_v_size_flags(Control::SIZE_EXPAND_FILL);
 	side_vb->add_child(version_list);

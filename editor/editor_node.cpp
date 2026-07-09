@@ -1053,7 +1053,7 @@ void EditorNode::_notification(int p_what) {
 			// Also use this opportunity to ensure default settings are applied to new projects created from the command line
 			// using `touch project.godot`.
 			if (DisplayServer::get_singleton()->window_can_draw()) {
-				const String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.godot");
+				const String project_settings_path = ProjectSettings::get_singleton()->get_project_config_path();
 				// Check the file's size in bytes as an optimization. If it's under 10 bytes, the file is assumed to be empty.
 				if (FileAccess::get_size(project_settings_path) < 10) {
 					const HashMap<String, Variant> initial_settings = get_initial_settings();
@@ -1621,10 +1621,10 @@ void EditorNode::_scan_external_changes() {
 		}
 	}
 
-	String project_settings_path = ProjectSettings::get_singleton()->get_resource_path().path_join("project.godot");
+	String project_settings_path = ProjectSettings::get_singleton()->get_project_config_path();
 	if (FileAccess::get_modified_time(project_settings_path) > ProjectSettings::get_singleton()->get_last_saved_time()) {
 		TreeItem *ti = disk_changed_list->create_item(r);
-		ti->set_text(0, "project.godot");
+		ti->set_text(0, project_settings_path.get_file());
 		need_reload = true;
 		disk_changed_project = true;
 	}
@@ -2150,7 +2150,7 @@ void EditorNode::_dialog_display_load_error(String p_file, Error p_error) {
 				show_warning(vformat(TTR("Missing file '%s' or one of its dependencies."), p_file.get_file()));
 			} break;
 			case ERR_FILE_UNRECOGNIZED: {
-				show_warning(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of Godot, so it can't be opened."), p_file.get_file()));
+				show_warning(vformat(TTR("File '%s' is saved in a format that is newer than the formats supported by this version of %s, so it can't be opened."), p_file.get_file(), GODOT_VERSION_NAME));
 			} break;
 			default: {
 				show_warning(vformat(TTR("Error while loading file '%s'."), p_file.get_file()));
@@ -9049,8 +9049,8 @@ EditorNode::EditorNode() {
 	ED_SHORTCUT_AND_COMMAND("editor/report_a_bug", TTRC("Report a Bug"));
 	ED_SHORTCUT_AND_COMMAND("editor/suggest_a_feature", TTRC("Suggest a Feature"));
 	ED_SHORTCUT_AND_COMMAND("editor/send_docs_feedback", TTRC("Send Docs Feedback"));
-	ED_SHORTCUT_AND_COMMAND("editor/about", TTRC("About Godot..."));
-	ED_SHORTCUT_AND_COMMAND("editor/support_development", TTRC("Support Godot Development"));
+	ED_SHORTCUT_AND_COMMAND("editor/about", vformat(TTRC("About %s..."), GODOT_VERSION_NAME));
+	ED_SHORTCUT_AND_COMMAND("editor/support_development", TTRC("Support Engine Development"));
 
 	// Use the Ctrl modifier so F2 can be used to rename nodes in the scene tree dock.
 	ED_SHORTCUT_AND_COMMAND("editor/editor_2d", TTRC("Open 2D Workspace"), KeyModifierMask::CTRL | Key::F1);
@@ -9412,7 +9412,7 @@ EditorNode::EditorNode() {
 
 	disk_changed = memnew(ConfirmationDialog);
 	{
-		disk_changed->set_title(TTR("Files have been modified outside Godot"));
+		disk_changed->set_title(vformat(TTR("Files have been modified outside %s"), GODOT_VERSION_NAME));
 
 		VBoxContainer *vbc = memnew(VBoxContainer);
 		disk_changed->add_child(vbc);
@@ -9442,7 +9442,7 @@ EditorNode::EditorNode() {
 
 	project_data_missing = memnew(ConfirmationDialog);
 	project_data_missing->set_flag(Window::FLAG_RESIZE_DISABLED, true);
-	project_data_missing->set_text(TTRC("Project data folder (.godot) is missing. Please restart editor."));
+	project_data_missing->set_text(vformat(TTRC("Project data folder (.%s) is missing. Please restart editor."), ProjectSettings::PROJECT_DATA_DIR_NAME_SUFFIX));
 	project_data_missing->connect(SceneStringName(confirmed), callable_mp(this, &EditorNode::restart_editor).bind(false));
 	project_data_missing->set_ok_button_text(TTRC("Restart"));
 

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="CJavaScript" inherits="Script" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../doc/class.xsd">
+	<brief_description>
+		CJava script resource (Java-syntax, no GC, engine-owned references).
+	</brief_description>
+	<description>
+		CJava is Cyaegha Engine's Java-like scripting language. Scripts use the [code].cjava[/code] extension and compile to an embedded bytecode-less runtime with explicit object ownership via [ObjectID] handles.
+	</description>
+</class>

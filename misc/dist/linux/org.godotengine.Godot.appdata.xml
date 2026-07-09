@@ -4,7 +4,7 @@
   <id>org.godotengine.Godot</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Godot Engine</name>
+  <name>Cyaegha Engine</name>
   <summary>Multi-platform 2D and 3D game engine with a feature-rich editor</summary>
   <launchable type="desktop-id">org.godotengine.Godot.desktop</launchable>
   <description>
@@ -25,12 +25,12 @@
       <image>https://docs.godotengine.org/en/stable/_images/introduction_editor.webp</image>
     </screenshot>
   </screenshots>
-  <url type="homepage">https://godotengine.org</url>
+  <url type="homepage">https://github.com/Sanrol-Team/Cyaegha-Engine</url>
   <url type="bugtracker">https://github.com/godotengine/godot/issues</url>
   <url type="faq">https://docs.godotengine.org/en/latest/about/faq.html</url>
   <url type="help">https://docs.godotengine.org</url>
   <url type="donation">https://fund.godotengine.org</url>
   <url type="translate">https://hosted.weblate.org/projects/godot-engine/godot</url>
-  <developer_name>The Godot Engine Community</developer_name>
+  <developer_name>The Cyaegha Engine Community</developer_name>
   <update_contact>akien_at_godotengine_dot_org</update_contact>
 </component>

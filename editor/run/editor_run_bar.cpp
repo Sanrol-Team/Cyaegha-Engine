@@ -33,6 +33,7 @@
 #include "core/config/engine.h"
 #include "core/config/project_settings.h"
 #include "core/object/callable_mp.h"
+#include "core/version.h"
 #include "editor/debugger/editor_debugger_node.h"
 #include "editor/debugger/script_editor_debugger.h"
 #include "editor/editor_node.h"
@@ -267,11 +268,10 @@ void EditorRunBar::_run_scene(const String &p_scene_path, const Vector<String> &
 
 	String resource_path = ProjectSettings::get_singleton()->get_resource_path();
 	if (!resource_path.is_empty()) {
-		String project_file_path = resource_path.path_join("project.godot");
+		String project_file_path = ProjectSettings::get_singleton()->get_project_config_path();
 		if (!FileAccess::exists(project_file_path)) {
-			// TODO: Try to recover the "project.godot" file using ProjectSettings::get_singleton()->save()
 			EditorNode::get_singleton()->show_warning(
-					TTRC("Failed to run the project because the project.godot file is missing."),
+					vformat(TTRC("Failed to run the project because the %s file is missing."), ProjectSettings::PROJECT_CONFIG_FILE_NAME),
 					TTRC("Error!"));
 			return;
 		}
@@ -582,7 +582,7 @@ EditorRunBar::EditorRunBar() {
 		recovery_mode_popup->set_min_size(Size2(550, 70) * EDSCALE);
 		recovery_mode_popup->set_title(TTR("Recovery Mode"));
 		recovery_mode_popup->set_text(
-				TTR("Godot opened the project in Recovery Mode, which is a special mode that can help recover projects that crash the engine upon initialization. The following features have been temporarily disabled:") +
+				vformat(TTR("%s opened the project in Recovery Mode, which is a special mode that can help recover projects that crash the engine upon initialization. The following features have been temporarily disabled:"), GODOT_VERSION_NAME) +
 				String::utf8("\n\n•  ") + TTR("Tool scripts") +
 				String::utf8("\n•  ") + TTR("Editor plugins") +
 				String::utf8("\n•  ") + TTR("GDExtension addons") +

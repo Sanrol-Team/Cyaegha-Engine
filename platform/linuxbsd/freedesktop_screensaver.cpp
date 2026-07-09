@@ -33,6 +33,7 @@
 #ifdef DBUS_ENABLED
 
 #include "core/config/project_settings.h"
+#include "core/version.h"
 
 #ifdef SOWRAP_ENABLED
 #include "dbus-so_wrap.h"
@@ -61,9 +62,9 @@ void FreeDesktopScreenSaver::inhibit() {
 
 	String app_name_string = GLOBAL_GET("application/config/name");
 	CharString app_name_utf8 = app_name_string.utf8();
-	const char *app_name = app_name_string.is_empty() ? "Godot Engine" : app_name_utf8.get_data();
+	const char *app_name = app_name_string.is_empty() ? GODOT_VERSION_NAME : app_name_utf8.get_data();
 
-	const char *reason = "Running Godot Engine project";
+	const char *reason = "Running Cyaegha Engine project";
 
 	DBusMessage *message = dbus_message_new_method_call(
 			BUS_OBJECT_NAME, BUS_OBJECT_PATH, BUS_INTERFACE,

@@ -34,6 +34,7 @@
 #include "core/io/json.h"
 #include "core/object/callable_mp.h"
 #include "core/object/class_db.h"
+#include "core/version.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
 #include "editor/file_system/editor_paths.h"
@@ -1068,7 +1069,7 @@ EditorFeatureProfileManager::EditorFeatureProfileManager() {
 	import_profiles = memnew(EditorFileDialog);
 	add_child(import_profiles);
 	import_profiles->set_file_mode(EditorFileDialog::FILE_MODE_OPEN_FILES);
-	import_profiles->add_filter("*.profile", TTR("Godot Feature Profile"));
+	import_profiles->add_filter("*.profile", vformat(TTR("%s Feature Profile"), GODOT_VERSION_NAME));
 	import_profiles->connect("files_selected", callable_mp(this, &EditorFeatureProfileManager::_import_profiles));
 	import_profiles->set_title(TTR("Import Profile(s)"));
 	import_profiles->set_access(EditorFileDialog::ACCESS_FILESYSTEM);
@@ -1076,7 +1077,7 @@ EditorFeatureProfileManager::EditorFeatureProfileManager() {
 	export_profile = memnew(EditorFileDialog);
 	add_child(export_profile);
 	export_profile->set_file_mode(EditorFileDialog::FILE_MODE_SAVE_FILE);
-	export_profile->add_filter("*.profile", TTR("Godot Feature Profile"));
+	export_profile->add_filter("*.profile", vformat(TTR("%s Feature Profile"), GODOT_VERSION_NAME));
 	export_profile->connect("file_selected", callable_mp(this, &EditorFeatureProfileManager::_export_profile));
 	export_profile->set_title(TTR("Export Profile"));
 	export_profile->set_access(EditorFileDialog::ACCESS_FILESYSTEM);

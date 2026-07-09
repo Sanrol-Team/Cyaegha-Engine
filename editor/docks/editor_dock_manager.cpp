@@ -31,6 +31,7 @@
 #include "editor_dock_manager.h"
 
 #include "core/object/callable_mp.h"
+#include "core/version.h"
 #include "editor/docks/dock_tab_container.h"
 #include "editor/docks/editor_dock.h"
 #include "editor/editor_node.h"
@@ -288,7 +289,7 @@ void EditorDockManager::_open_dock_in_window(EditorDock *p_dock, bool p_show_win
 	Point2 dock_screen_pos = floating_rect.position;
 
 	WindowWrapper *wrapper = memnew(WindowWrapper);
-	wrapper->set_window_title(vformat(TTR("%s - Godot Engine"), TTR(p_dock->get_display_title())));
+	wrapper->set_window_title(vformat("%s - %s", TTR(p_dock->get_display_title()), GODOT_VERSION_NAME));
 	wrapper->set_margins_enabled(true);
 
 	EditorNode::get_singleton()->get_gui_base()->add_child(wrapper);

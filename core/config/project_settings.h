@@ -53,9 +53,16 @@ class ProjectSettings : public Object {
 
 public:
 	typedef HashMap<String, Variant> CustomMap;
-	// This constant is used to make the ".godot" folder and paths like "res://.godot/editor".
-	static inline const String PROJECT_DATA_DIR_NAME_SUFFIX = "godot";
+	// This constant is used to make the ".cyaegha" folder and paths like "res://.cyaegha/editor".
+	static inline const String PROJECT_DATA_DIR_NAME_SUFFIX = "cyaegha";
+	static inline const String LEGACY_PROJECT_DATA_DIR_NAME_SUFFIX = "godot";
+	static inline const String PROJECT_CONFIG_FILE_NAME = "project.cyaegha";
+	static inline const String LEGACY_PROJECT_CONFIG_FILE_NAME = "project.godot";
 	static inline const String EDITOR_SETTING_OVERRIDE_PREFIX = PNAME("editor_overrides") + String("/");
+
+	static bool is_project_config_file_name(const String &p_filename);
+	static String path_join_project_config(const String &p_dir);
+	static String resolve_project_config_path(const String &p_dir);
 
 	// Properties that are not for built in values begin from this value, so builtin ones are displayed first.
 	constexpr static const int32_t NO_BUILTIN_ORDER_BASE = 1 << 16;
@@ -117,6 +124,7 @@ protected:
 	bool is_global_class_list_loaded = false;
 
 	String project_data_dir_name;
+	String loaded_project_config_file = PROJECT_CONFIG_FILE_NAME;
 
 	bool _set(const StringName &p_name, const Variant &p_value);
 	bool _get(const StringName &p_name, Variant &r_ret) const;
@@ -132,6 +140,7 @@ protected:
 	Error _load_settings_text(const String &p_path);
 	Error _load_settings_binary(const String &p_path);
 	Error _load_settings_text_or_binary(const String &p_text_path, const String &p_bin_path);
+	Error _load_settings_text_or_binary_with_fallback(const String &p_dir_or_prefix);
 
 	Error _save_settings_text(const String &p_file, const RBMap<String, List<String>> &props, const CustomMap &p_custom = CustomMap(), const String &p_custom_features = String());
 	Error _save_settings_binary(const String &p_file, const RBMap<String, List<String>> &props, const CustomMap &p_custom = CustomMap(), const String &p_custom_features = String());
@@ -187,6 +196,7 @@ public:
 	String get_project_data_path() const;
 	String get_resource_path() const;
 	String get_imported_files_path() const;
+	String get_project_config_path() const;
 
 	static ProjectSettings *get_singleton();
 

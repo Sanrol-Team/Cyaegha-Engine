@@ -30,6 +30,7 @@
 
 #include "export_plugin.h"
 
+#include "core/version.h"
 #include "logo_svg.gen.h"
 #include "run_icon_svg.gen.h"
 
@@ -229,7 +230,7 @@ Error EditorExportPlatformWeb::_add_manifest_icon(const Ref<EditorExportPreset> 
 Error EditorExportPlatformWeb::_build_pwa(const Ref<EditorExportPreset> &p_preset, const String p_path, const Vector<SharedObject> &p_shared_objects) {
 	String proj_name = get_project_setting(p_preset, "application/config/name");
 	if (proj_name.is_empty()) {
-		proj_name = "Godot Game";
+		proj_name = "Cyaegha Game";
 	}
 
 	// Service worker
@@ -424,7 +425,7 @@ Ref<Texture2D> EditorExportPlatformWeb::get_logo() const {
 bool EditorExportPlatformWeb::has_valid_export_configuration(const Ref<EditorExportPreset> &p_preset, String &r_error, bool &r_missing_templates, bool p_debug) const {
 #ifdef MODULE_MONO_ENABLED
 	// Don't check for additional errors, as this particular error cannot be resolved.
-	r_error += TTR("Exporting to Web is currently not supported in Godot 4 when using C#/.NET. Use Godot 3 to target Web with C#/Mono instead.") + "\n";
+	r_error += vformat(TTR("Exporting to Web is currently not supported in %s 4 when using C#/.NET. Use Godot 3 to target Web with C#/Mono instead."), GODOT_VERSION_NAME) + "\n";
 	r_error += TTR("If this project does not use C#, use a non-C# editor build to export the project.") + "\n";
 	return false;
 #else

@@ -36,7 +36,7 @@
 #include "core/object/callable_mp.h"
 #include "core/object/class_db.h"
 #include "core/os/os.h"
-#include "core/version_generated.gen.h"
+#include "core/version.h"
 #include "editor/docks/inspector_dock.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
@@ -2259,7 +2259,7 @@ TextShaderEditor::TextShaderEditor() {
 	site_search->set_theme_type_variation(SceneStringName(FlatButton));
 	site_search->connect(SceneStringName(pressed), callable_mp(this, &TextShaderEditor::_menu_option).bind(HELP_DOCS));
 	site_search->set_text(TTRC("Online Docs"));
-	site_search->set_tooltip_text(TTRC("Open Godot online documentation."));
+	site_search->set_tooltip_text(vformat(TTRC("Open %s online documentation."), GODOT_VERSION_NAME));
 	menu_bar_hbox->add_child(site_search);
 
 	menu_bar_hbox->add_theme_style_override(SceneStringName(panel), EditorNode::get_singleton()->get_editor_theme()->get_stylebox(SNAME("ScriptEditorPanel"), EditorStringName(EditorStyles)));

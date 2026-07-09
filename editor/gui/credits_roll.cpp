@@ -36,6 +36,7 @@
 #include "core/license.gen.h"
 #include "core/object/callable_mp.h"
 #include "core/string/string_builder.h"
+#include "core/version.h"
 #include "editor/editor_node.h"
 #include "editor/editor_string_names.h"
 #include "editor/project_manager/project_manager.h"
@@ -237,7 +238,7 @@ void CreditsRoll::roll_credits() {
 		_create_label(String::utf8(GODOT_LICENSE_TEXT));
 
 		_create_nothing(400 * EDSCALE);
-		_create_label(TTRC("Thank you for choosing Godot Engine!"), LabelSize::BIG_HEADER);
+		_create_label(vformat(TTRC("Thank you for choosing %s!"), GODOT_VERSION_NAME), LabelSize::BIG_HEADER);
 	}
 	// Needs to be set here, otherwise the starting position will be incorrect.
 	content->set_anchors_and_offsets_preset(Control::PRESET_VCENTER_WIDE);

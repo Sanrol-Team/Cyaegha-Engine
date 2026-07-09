@@ -23,6 +23,9 @@
 ###########################
 
 /custom.py
+/build/
+/build-native/
+/cmake/generated/
 
 #############################
 ### Godot generated files ###
