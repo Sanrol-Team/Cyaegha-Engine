@@ -8,15 +8,16 @@
   "configurePresets": [
     {
       "name": "ci-windows-editor",
-      "displayName": "CI — Windows Editor (VS 2022)",
-      "description": "GitHub Actions: native CMake on windows-latest",
-      "generator": "Visual Studio 17 2022",
-      "architecture": "x64",
+      "displayName": "CI — Windows Editor (Ninja + MSVC)",
+      "description": "GitHub Actions: Ninja Multi-Config with MSVC toolset on windows-latest",
+      "generator": "Ninja Multi-Config",
       "binaryDir": "${sourceDir}/build-native",
       "cacheVariables": {
         "GODOT_PLATFORM": "windows",
         "GODOT_TARGET": "editor",
-        "GODOT_ARCH": "x86_64"
+        "GODOT_ARCH": "x86_64",
+        "CMAKE_C_COMPILER": "cl",
+        "CMAKE_CXX_COMPILER": "cl"
       }
     },
     {

@@ -288,7 +288,9 @@
 
 # Buildsystem (After everything to catch all)
 
-/*.*                                          @godotengine/buildsystem
+/cmake/                                       @godotengine/buildsystem
+/CMakeLists.txt                               @godotengine/buildsystem
+/CMakePresets.json                            @godotengine/buildsystem
 *.py                                          @godotengine/buildsystem
 SConstruct                                    @godotengine/buildsystem
 SCsub                                         @godotengine/buildsystem

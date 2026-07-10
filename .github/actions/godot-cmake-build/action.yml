@@ -25,6 +25,8 @@ runs:
     - name: Configure (CMake preset)
       shell: bash
       run: |
+        which cl || where cl
+        cl 2>&1 | head -1 || true
         cmake --preset "${{ inputs.preset }}" \
           -DGODOT_FORCE_BOOTSTRAP=${{ inputs.force-bootstrap }}
 

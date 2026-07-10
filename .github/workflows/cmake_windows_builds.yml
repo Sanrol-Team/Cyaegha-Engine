@@ -38,6 +38,11 @@ jobs:
         with:
           cmake-version: "3.31.x"
 
+      - name: Setup MSVC toolset
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+
       - name: Restore CMake build cache
         uses: actions/cache/restore@v4
         with:

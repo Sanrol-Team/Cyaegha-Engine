@@ -36,7 +36,7 @@ Configure options:
 
 在 GitHub 仓库页面：**Actions → CMake Windows Builds → Run workflow**，或在 push/PR 时自动触发。
 
-CI 使用预设 `ci-windows-editor`（VS 2022，适配 `windows-latest` runner），编译完成后可从 Artifacts 下载 `cmake-windows-editor` 包，内含 `bin/godot.windows.editor.x86_64*.exe`。
+CI 使用预设 `ci-windows-editor`（Ninja + MSVC，适配 `windows-latest` runner），编译完成后可从 Artifacts 下载 `cmake-windows-editor` 包，内含 `bin/godot.windows.editor.x86_64*.exe`。
 
 缓存目录 `build-native/` 与 `cmake/generated/` 会跨 CI 运行复用，实现增量编译。
 
