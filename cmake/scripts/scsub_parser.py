@@ -25,14 +25,14 @@ def parse_scsub(scsub_path: Path, root: Path, editor_build: bool = True) -> tupl
     includes: set[str] = set()
     sources: set[str] = set()
 
-    for match in re.finditer(r'Prepend\(CPPPATH=\[([^\]]+)\]', text):
+    for match in re.finditer(r"Prepend\(CPPPATH=\[([^\]]+)\]", text):
         for path in re.findall(r'["\']#?([^"\']+)', match.group(1)):
             includes.add(path.rstrip("/"))
 
     tp_base = None
-    match = re.search(r'thirdparty_dir\s*=\s*["\']#(thirdparty/[^"\']+)', text)
-    if match:
-        tp_base = match.group(1).rstrip("/")
+    tp_match = re.search(r'thirdparty_dir\s*=\s*["\']#(thirdparty/[^"\']+)', text)
+    if tp_match:
+        tp_base = tp_match.group(1).rstrip("/")
         includes.add(tp_base)
 
     for raw in _extract_quoted_lists(text, ["thirdparty_sources", "thirdparty_misc_sources"]):

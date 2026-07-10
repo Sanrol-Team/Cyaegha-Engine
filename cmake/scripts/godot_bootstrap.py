@@ -8,6 +8,7 @@ import json
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 from scsub_parser import parse_scsub
 
@@ -185,7 +186,7 @@ def collect_module_sources(name: str, path: str, editor_build: bool) -> tuple[li
     return sources, includes
 
 
-def emit_build_cmake(manifest: dict) -> None:
+def emit_build_cmake(manifest: dict[str, Any]) -> None:
     enabled_modules: dict[str, str] = manifest["enabled_modules"]
     editor_build: bool = manifest["editor_build"]
     suffix = manifest["suffix"]
@@ -198,17 +199,10 @@ def emit_build_cmake(manifest: dict) -> None:
         editor_sources = sorted(set(editor_sources + collect_tree("platform/windows/export")))
 
     drivers_sources = sorted(
-        set(
-            f
-            for root in DRIVER_WINDOWS_ROOTS
-            for f in collect_tree(root)
-        )
-        | set(existing(DRIVER_EXTRA_SOURCES))
+        set(f for root in DRIVER_WINDOWS_ROOTS for f in collect_tree(root)) | set(existing(DRIVER_EXTRA_SOURCES))
     )
 
-    platform_sources = existing(
-        ["platform/register_platform_apis.gen.cpp", "platform/windows/api/api.cpp"]
-    )
+    platform_sources = existing(["platform/register_platform_apis.gen.cpp", "platform/windows/api/api.cpp"])
     main_sources = collect_tree("main")
 
     module_libs: list[tuple[str, list[str], list[str]]] = []
@@ -248,18 +242,16 @@ def emit_build_cmake(manifest: dict) -> None:
         link_libs.append("godot_editor")
     link_libs.extend(["godot_scene", "godot_servers", "godot_core"])
 
-    lines.extend(
-        [
-            "set(GODOT_MODULE_TARGETS",
-            *[f'    "godot_module_{name}"' for name, _, _ in module_libs],
-            ")",
-            "",
-            "set(GODOT_LINK_LIBS",
-            *[f'    "{lib}"' for lib in link_libs],
-            ")",
-            "",
-        ]
-    )
+    lines.extend([
+        "set(GODOT_MODULE_TARGETS",
+        *[f'    "godot_module_{name}"' for name, _, _ in module_libs],
+        ")",
+        "",
+        "set(GODOT_LINK_LIBS",
+        *[f'    "{lib}"' for lib in link_libs],
+        ")",
+        "",
+    ])
 
     out = GENERATED / "godot_build.cmake"
     out.write_text("\n".join(lines) + "\n", encoding="utf-8")
