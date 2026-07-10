@@ -1,0 +1,40 @@
+name: Build Cyaegha (native CMake)
+description: Configure and build the engine with the native CMake pipeline.
+
+inputs:
+  preset:
+    description: CMake configure preset name.
+    default: ci-windows-editor
+    type: string
+  build-preset:
+    description: CMake build preset name.
+    default: ci-windows-editor
+    type: string
+  configuration:
+    description: MSVC configuration (Debug, Release, RelWithDebInfo).
+    default: RelWithDebInfo
+    type: string
+  force-bootstrap:
+    description: Re-run codegen and source scan.
+    default: "false"
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Configure (CMake preset)
+      shell: bash
+      run: |
+        cmake --preset "${{ inputs.preset }}" \
+          -DGODOT_FORCE_BOOTSTRAP=${{ inputs.force-bootstrap }}
+
+    - name: Build
+      shell: bash
+      run: |
+        cmake --build --preset "${{ inputs.build-preset }}" \
+          --config "${{ inputs.configuration }}" \
+          --parallel
+
+    - name: List binaries
+      shell: bash
+      run: ls -lh bin/ || true

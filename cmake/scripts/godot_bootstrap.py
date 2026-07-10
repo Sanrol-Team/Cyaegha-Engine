@@ -9,35 +9,77 @@ import subprocess
 import sys
 from pathlib import Path
 
+from scsub_parser import parse_scsub
+
 ROOT = Path(__file__).resolve().parents[2]
 GENERATED = ROOT / "cmake" / "generated"
 EXCLUDE_PARTS = ("/tests/", "\\tests\\", "/test/", "\\test\\")
 
+DRIVER_WINDOWS_ROOTS = [
+    "drivers/windows",
+    "drivers/wasapi",
+    "drivers/winmidi",
+    "drivers/vulkan",
+    "drivers/gl_context",
+    "drivers/gles3",
+    "drivers/egl",
+    "drivers/png",
+    "drivers/sdl",
+]
 
-def rel(path: Path) -> str:
-    return path.as_posix()
+DRIVER_EXTRA_SOURCES = [
+    "drivers/register_driver_types.cpp",
+    "thirdparty/vulkan/vk_mem_alloc.cpp",
+    "thirdparty/volk/volk.c",
+    "thirdparty/re-spirv/re-spirv.cpp",
+    "thirdparty/libpng/png.c",
+    "thirdparty/libpng/pngerror.c",
+    "thirdparty/libpng/pngget.c",
+    "thirdparty/libpng/pngmem.c",
+    "thirdparty/libpng/pngpread.c",
+    "thirdparty/libpng/pngread.c",
+    "thirdparty/libpng/pngrio.c",
+    "thirdparty/libpng/pngrtran.c",
+    "thirdparty/libpng/pngrutil.c",
+    "thirdparty/libpng/pngset.c",
+    "thirdparty/libpng/pngtrans.c",
+    "thirdparty/libpng/pngwio.c",
+    "thirdparty/libpng/pngwrite.c",
+    "thirdparty/libpng/pngwtran.c",
+    "thirdparty/libpng/pngwutil.c",
+    "thirdparty/libpng/intel/intel_init.c",
+    "thirdparty/libpng/intel/filter_sse2_intrinsics.c",
+    "thirdparty/spirv-reflect/spirv_reflect.c",
+]
 
+DRIVER_INCLUDES = [
+    "thirdparty/vulkan",
+    "thirdparty/vulkan/include",
+    "thirdparty/volk",
+    "thirdparty/libpng",
+    "thirdparty/spirv-headers/include",
+    "thirdparty/re-spirv",
+]
 
-def collect_tree(root: str, extensions: tuple[str, ...] = (".cpp", ".c", ".S")) -> list[str]:
-    base = ROOT / root
-    if not base.is_dir():
-        return []
-    out: list[str] = []
-    for ext in extensions:
-        for path in sorted(base.rglob(f"*{ext}")):
-            s = str(path)
-            if any(part in s for part in EXCLUDE_PARTS):
-                continue
-            out.append(rel(path.relative_to(ROOT)))
-    return sorted(set(out))
-
-
-def collect_globs(roots: list[str]) -> list[str]:
-    files: list[str] = []
-    for root in roots:
-        files.extend(collect_tree(root))
-    return sorted(set(files))
-
+WINDOWS_EXE_SOURCES = [
+    "platform/windows/os_windows.cpp",
+    "platform/windows/display_server_windows.cpp",
+    "platform/windows/key_mapping_windows.cpp",
+    "platform/windows/windows_terminal_logger.cpp",
+    "platform/windows/windows_utils.cpp",
+    "platform/windows/native_menu_windows.cpp",
+    "platform/windows/gl_manager_windows_native.cpp",
+    "platform/windows/wgl_detect_version.cpp",
+    "platform/windows/rendering_context_driver_vulkan_windows.cpp",
+    "platform/windows/drop_target_windows.cpp",
+    "platform/windows/godot_windows.cpp",
+    "platform/windows/crash_handler_windows_seh.cpp",
+    "platform/windows/cpu_feature_validation.c",
+    "platform/windows/tts_windows.cpp",
+    "platform/windows/tts_driver_sapi.cpp",
+    "platform/windows/winrt_utils.cpp",
+    "platform/windows/tts_driver_onecore.cpp",
+]
 
 CORE_THIRDPARTY = [
     "thirdparty/misc/fastlz.c",
@@ -102,38 +144,27 @@ CORE_THIRDPARTY = [
     "thirdparty/zstd/decompress/zstd_decompress.c",
 ]
 
-DRIVER_WINDOWS_ROOTS = [
-    "drivers",
-    "drivers/windows",
-    "drivers/wasapi",
-    "drivers/winmidi",
-    "drivers/vulkan",
-    "drivers/gl_context",
-    "drivers/gles3",
-    "drivers/egl",
-    "drivers/png",
-    "drivers/sdl",
-]
 
-WINDOWS_EXE_SOURCES = [
-    "platform/windows/os_windows.cpp",
-    "platform/windows/display_server_windows.cpp",
-    "platform/windows/key_mapping_windows.cpp",
-    "platform/windows/windows_terminal_logger.cpp",
-    "platform/windows/windows_utils.cpp",
-    "platform/windows/native_menu_windows.cpp",
-    "platform/windows/gl_manager_windows_native.cpp",
-    "platform/windows/wgl_detect_version.cpp",
-    "platform/windows/rendering_context_driver_vulkan_windows.cpp",
-    "platform/windows/drop_target_windows.cpp",
-    "platform/windows/godot_windows.cpp",
-    "platform/windows/crash_handler_windows_seh.cpp",
-    "platform/windows/cpu_feature_validation.c",
-    "platform/windows/tts_windows.cpp",
-    "platform/windows/tts_driver_sapi.cpp",
-    "platform/windows/winrt_utils.cpp",
-    "platform/windows/tts_driver_onecore.cpp",
-]
+def rel(path: Path) -> str:
+    return path.as_posix()
+
+
+def collect_tree(root: str, extensions: tuple[str, ...] = (".cpp", ".c", ".S")) -> list[str]:
+    base = ROOT / root
+    if not base.is_dir():
+        return []
+    out: list[str] = []
+    for ext in extensions:
+        for path in sorted(base.rglob(f"*{ext}")):
+            s = str(path)
+            if any(part in s for part in EXCLUDE_PARTS):
+                continue
+            out.append(rel(path.relative_to(ROOT)))
+    return sorted(set(out))
+
+
+def existing(paths: list[str]) -> list[str]:
+    return sorted(p for p in paths if (ROOT / p).exists())
 
 
 def cmake_list(name: str, files: list[str]) -> str:
@@ -144,28 +175,48 @@ def cmake_list(name: str, files: list[str]) -> str:
     return "\n".join(lines)
 
 
+def collect_module_sources(name: str, path: str, editor_build: bool) -> tuple[list[str], list[str]]:
+    module_dir = ROOT / path
+    sources = collect_tree(path)
+    tp_sources, includes = parse_scsub(module_dir / "SCsub", ROOT, editor_build)
+    sources = sorted(set(sources + tp_sources))
+    # Module dir itself is an include root (for "register_types.h" etc.)
+    includes = sorted(set(includes + [path]))
+    return sources, includes
+
+
 def emit_build_cmake(manifest: dict) -> None:
     enabled_modules: dict[str, str] = manifest["enabled_modules"]
     editor_build: bool = manifest["editor_build"]
     suffix = manifest["suffix"]
 
-    core_sources = sorted(set(collect_tree("core") + [p for p in CORE_THIRDPARTY if (ROOT / p).exists()]))
+    core_sources = sorted(set(collect_tree("core") + existing(CORE_THIRDPARTY)))
     servers_sources = collect_tree("servers")
     scene_sources = collect_tree("scene")
     editor_sources = collect_tree("editor")
     if editor_build:
         editor_sources = sorted(set(editor_sources + collect_tree("platform/windows/export")))
-    drivers_sources = collect_globs(DRIVER_WINDOWS_ROOTS)
-    platform_sources = ["platform/register_platform_apis.gen.cpp", "platform/windows/api/api.cpp"]
-    platform_sources = [p for p in platform_sources if (ROOT / p).exists()]
+
+    drivers_sources = sorted(
+        set(
+            f
+            for root in DRIVER_WINDOWS_ROOTS
+            for f in collect_tree(root)
+        )
+        | set(existing(DRIVER_EXTRA_SOURCES))
+    )
+
+    platform_sources = existing(
+        ["platform/register_platform_apis.gen.cpp", "platform/windows/api/api.cpp"]
+    )
     main_sources = collect_tree("main")
 
-    module_libs: list[tuple[str, list[str]]] = []
+    module_libs: list[tuple[str, list[str], list[str]]] = []
     for name in sorted(enabled_modules.keys()):
         path = enabled_modules[name]
-        srcs = collect_tree(path)
+        srcs, includes = collect_module_sources(name, path, editor_build)
         if srcs:
-            module_libs.append((name, srcs))
+            module_libs.append((name, srcs, includes))
 
     modules_sources = ["modules/register_module_types.gen.cpp"]
 
@@ -176,6 +227,7 @@ def emit_build_cmake(manifest: dict) -> None:
         cmake_list("GODOT_SCENE_SOURCES", scene_sources),
         cmake_list("GODOT_EDITOR_SOURCES", editor_sources if editor_build else []),
         cmake_list("GODOT_DRIVERS_SOURCES", drivers_sources),
+        cmake_list("GODOT_DRIVERS_INCLUDES", existing(DRIVER_INCLUDES)),
         cmake_list("GODOT_PLATFORM_SOURCES", platform_sources),
         cmake_list("GODOT_MAIN_SOURCES", main_sources),
         cmake_list("GODOT_MODULES_SOURCES", modules_sources),
@@ -184,27 +236,22 @@ def emit_build_cmake(manifest: dict) -> None:
         "",
     ]
 
-    for name, srcs in module_libs:
-        var = f"GODOT_MODULE_{name.upper()}_SOURCES"
-        lines.append(cmake_list(var, srcs))
+    for name, srcs, includes in module_libs:
+        upper = name.upper()
+        lines.append(cmake_list(f"GODOT_MODULE_{upper}_SOURCES", srcs))
+        lines.append(cmake_list(f"GODOT_MODULE_{upper}_INCLUDES", includes))
         lines.append("")
 
-    module_targets = [f"godot_module_{name}" for name, _ in module_libs]
+    module_targets = [f"godot_module_{name}" for name, _, _ in module_libs]
     link_libs = ["godot_main", "godot_modules", *reversed(module_targets), "godot_platform", "godot_drivers"]
     if editor_build:
         link_libs.append("godot_editor")
     link_libs.extend(["godot_scene", "godot_servers", "godot_core"])
 
-    module_defines = [f"MODULE_{name.upper()}_ENABLED" for name in sorted(enabled_modules.keys())]
-
     lines.extend(
         [
-            "set(GODOT_MODULE_DEFINES",
-            *[f'    "{d}"' for d in module_defines],
-            ")",
-            "",
             "set(GODOT_MODULE_TARGETS",
-            *[f'    "godot_module_{name}"' for name, _ in module_libs],
+            *[f'    "godot_module_{name}"' for name, _, _ in module_libs],
             ")",
             "",
             "set(GODOT_LINK_LIBS",
@@ -228,28 +275,33 @@ def main() -> int:
     parser.add_argument("--disabled-modules", default="")
     parser.add_argument("--platform-exporters", default="windows")
     parser.add_argument("--platform-apis", default="windows")
+    parser.add_argument("--skip-codegen", action="store_true")
     args = parser.parse_args()
 
-    codegen = ROOT / "cmake" / "scripts" / "godot_codegen.py"
-    cmd = [
-        sys.executable,
-        str(codegen),
-        "--platform",
-        args.platform,
-        "--target",
-        args.target,
-        "--disabled-modules",
-        args.disabled_modules,
-        "--platform-exporters",
-        args.platform_exporters,
-        "--platform-apis",
-        args.platform_apis,
-    ]
-    print("Running codegen...")
-    subprocess.check_call(cmd, cwd=ROOT)
+    if not args.skip_codegen:
+        codegen = ROOT / "cmake" / "scripts" / "godot_codegen.py"
+        cmd = [
+            sys.executable,
+            str(codegen),
+            "--platform",
+            args.platform,
+            "--target",
+            args.target,
+            "--disabled-modules",
+            args.disabled_modules,
+            "--platform-exporters",
+            args.platform_exporters,
+            "--platform-apis",
+            args.platform_apis,
+        ]
+        print("Running codegen...")
+        subprocess.check_call(cmd, cwd=ROOT)
 
     manifest_path = GENERATED / "codegen_manifest.json"
-    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    else:
+        manifest = {"enabled_modules": {}, "editor_build": args.target == "editor", "module_version_string": ""}
 
     suffix = f".{args.platform}.{args.target}"
     if args.dev_build:

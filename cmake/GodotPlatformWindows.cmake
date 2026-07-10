@@ -1,7 +1,6 @@
-# Windows MSVC compiler/link settings for native CMake builds.
+# Windows MSVC linker settings for native CMake builds.
 
 function(godot_configure_windows_msvc)
-    add_compile_definitions(${GODOT_MODULE_DEFINES})
     add_compile_definitions(
         WINDOWS_ENABLED
         WASAPI_ENABLED
@@ -23,13 +22,15 @@ function(godot_configure_windows_msvc)
         VULKAN_ENABLED
         GLES3_ENABLED
         RD_ENABLED
-        GODOT_MODULE
     )
 
     if(GODOT_EDITOR_BUILD)
         add_compile_definitions(
             TOOLS_ENABLED DEBUG_ENABLED ENGINE_UPDATE_CHECK_ENABLED OVERRIDE_PATH_ENABLED
         )
+        if(NOT EXISTS "${CMAKE_SOURCE_DIR}/main/splash_editor.png")
+            add_compile_definitions(NO_EDITOR_SPLASH)
+        endif()
     endif()
 
     if(GODOT_DEV_BUILD)
@@ -38,19 +39,9 @@ function(godot_configure_windows_msvc)
         add_compile_definitions(NDEBUG)
     endif()
 
-    add_compile_options(
-        /nologo
-        /utf-8
-        /bigobj
-        /fp:strict
-        /Gd
-        /GR
-        /EHsc
-        /MD
-        /W3
-        /std:c++17
-        /FS
-    )
+    if(MSVC)
+        add_compile_options(/nologo /Gd /GR /MD)
+    endif()
 
     set(GODOT_WINDOWS_LIBS
         winmm dsound kernel32 ole32 oleaut32 sapi user32 gdi32 IPHLPAPI

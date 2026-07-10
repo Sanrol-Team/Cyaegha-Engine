@@ -1,0 +1,84 @@
+name: 🧱 CMake Windows Builds
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+env:
+  PYTHONIOENCODING: utf8
+
+jobs:
+  cmake-windows:
+    runs-on: windows-latest
+    name: ${{ matrix.name }}
+    timeout-minutes: 180
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: CMake Editor (RelWithDebInfo)
+            cache-name: cmake-windows-editor
+            preset: ci-windows-editor
+            configuration: RelWithDebInfo
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          architecture: x64
+
+      - name: Setup CMake
+        uses: jwlawson/actions-setup-cmake@v2
+        with:
+          cmake-version: "3.31.x"
+
+      - name: Restore CMake build cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            build-native
+            cmake/generated
+          key: ${{ matrix.cache-name }}-${{ hashFiles('cmake/scripts/**', 'CMakeLists.txt', 'cmake/**.cmake') }}
+          restore-keys: |
+            ${{ matrix.cache-name }}-
+
+      - name: Build (native CMake)
+        uses: ./.github/actions/godot-cmake-build
+        with:
+          preset: ${{ matrix.preset }}
+          build-preset: ${{ matrix.preset }}
+          configuration: ${{ matrix.configuration }}
+          force-bootstrap: "ON"
+
+      - name: Save CMake build cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            build-native
+            cmake/generated
+          key: ${{ matrix.cache-name }}-${{ hashFiles('cmake/scripts/**', 'CMakeLists.txt', 'cmake/**.cmake') }}
+
+      - name: Prepare artifact
+        shell: bash
+        run: |
+          BIN=$(ls bin/godot.windows.editor.x86_64*.exe 2>/dev/null | head -1)
+          if [ -z "$BIN" ]; then
+            echo "::error::Editor binary not found in bin/"
+            ls -la bin/ || true
+            exit 1
+          fi
+          echo "GODOT_BIN=$BIN" >> "$GITHUB_ENV"
+          "$BIN" --version
+          rm -f bin/*.exp bin/*.lib bin/*.pdb 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: ./.github/actions/upload-artifact
+        with:
+          name: ${{ matrix.cache-name }}
