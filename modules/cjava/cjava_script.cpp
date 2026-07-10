@@ -22,8 +22,6 @@ static uint32_t _cjava_export_usage() {
 }
 
 void CJavaScript::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("get_source_code"), &CJavaScript::get_source_code);
-	ClassDB::bind_method(D_METHOD("set_source_code", "source"), &CJavaScript::set_source_code);
 }
 
 void CJavaLanguage::_bind_methods() {}
